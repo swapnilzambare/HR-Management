@@ -12,13 +12,18 @@ from config import (
     MYSQL_CONFIG,
     MYSQL_CONNECT_DELAY,
     MYSQL_CONNECT_RETRIES,
-    S3_PREFIX,
-    S3_PRESIGNED_URL_EXPIRY,
     S3_BUCKET,
     S3_KEY,
     S3_SECRET,
-    S3_REGION
+    S3_PREFIX,
+    S3_PRESIGNED_URL_EXPIRY,
+    S3_REGION,
 )
+
+
+if S3_BUCKET and S3_KEY and S3_SECRET:
+    print("S3 configured")
+
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 import mysql.connector
