@@ -1,0 +1,17 @@
+.git
+.gitignore
+
+.dockerignore
+.gitignore
+.vscode
+.idea
+__pycache__
+*.pyc
+venv
+env
+.env
+*.log
+.pytest_cache
+.coverage
+htmlcov
+.pwd

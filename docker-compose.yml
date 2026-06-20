@@ -1,0 +1,39 @@
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-7569}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-hr_management}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: db
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-7569}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-hr_management}
+      MYSQL_CONNECT_RETRIES: 30
+      MYSQL_CONNECT_DELAY: 2
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_PREFIX: ${S3_PREFIX:-uploads}
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
+      S3_PRESIGNED_URL_EXPIRY: ${S3_PRESIGNED_URL_EXPIRY:-300}
+    ports:
+      - "${APP_PORT:-5000}:5000"
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  mysql_data:
