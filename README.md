@@ -118,7 +118,43 @@ The app will start at:
 http://localhost:5000
 ```
 
-## Docker Run Commands
+## Docker Compose Run Commands
+
+The recommended containerized setup starts both Flask and MySQL:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+```text
+http://localhost:5000
+```
+
+The Docker Compose setup uses these defaults:
+
+```text
+MYSQL_ROOT_PASSWORD=7569
+MYSQL_DATABASE=hr_management
+APP_PORT=5000
+```
+
+You can override them by creating a `.env` file in the project root.
+
+Stop the containers:
+
+```bash
+docker compose down
+```
+
+Stop the containers and remove the MySQL data volume:
+
+```bash
+docker compose down -v
+```
+
+## Docker Run Commands With Host MySQL
 
 Build the Docker image:
 
@@ -126,13 +162,13 @@ Build the Docker image:
 docker build -t hr-management .
 ```
 
-Run the Docker container:
+If you want to run only the Flask container and connect it to MySQL installed on your computer, run:
 
 ```bash
 docker run -p 5000:5000 \
   -e MYSQL_HOST=host.docker.internal \
   -e MYSQL_USER=root \
-  -e MYSQL_PASSWORD=your_mysql_password \
+  -e MYSQL_PASSWORD=7569 \
   -e MYSQL_DATABASE=hr_management \
   hr-management
 ```
@@ -147,10 +183,56 @@ http://localhost:5000
 
 The project uses MySQL. When `app.py` runs directly, it calls `init_db()` and creates the configured database and `employees` table if they do not already exist.
 
-## Uploads
+## Resume Storage
 
-Resume files are saved in the `uploads/` folder. Supported file types are:
+By default, resume files are saved in the local `uploads/` folder. For AWS ECS/Fargate, configure S3 storage with environment variables:
+
+```text
+S3_BUCKET=your-s3-bucket-name
+S3_PREFIX=resumes
+AWS_REGION=your-aws-region
+S3_PRESIGNED_URL_EXPIRY=300
+```
+
+When `S3_BUCKET` is set, uploaded resumes are stored in S3 and download links use short-lived presigned URLs.
+
+Supported file types are:
 
 - `.pdf`
 - `.doc`
 - `.docx`
+
+## AWS ECS/Fargate Settings
+
+For Fargate with RDS MySQL and S3, set these container environment variables:
+
+```text
+MYSQL_HOST=your-rds-endpoint.amazonaws.com
+MYSQL_USER=your-rds-user
+MYSQL_PASSWORD=your-rds-password
+MYSQL_DATABASE=hr_management
+MYSQL_CONNECT_RETRIES=30
+MYSQL_CONNECT_DELAY=2
+S3_BUCKET=your-s3-bucket-name
+S3_PREFIX=resumes
+AWS_REGION=your-aws-region
+```
+
+The ECS task role needs permission to access the S3 bucket:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::your-s3-bucket-name/*"
+    }
+  ]
+}
+```
